@@ -1,0 +1,153 @@
+---
+title: "Assignment 4_Text Visualization"
+author: "Samaun Sarwar Khan"
+output: pdf_document
+date: "2023-12-08"
+---
+
+Chekhov's "The Lady with the Dog" is a touching story about love and secrets. It tells us about Dmitri and Anna, who fall in love even though they're both married to other people. Based on the story we will prepare a text visualization.
+
+```{r, include=FALSE}
+library(tm)
+library(NLP)
+library(wordcloud)
+library(RColorBrewer)
+```
+
+```{r}
+#Loading the data
+text <- readLines("Chekhov The Lady with the Dog.txt", warn = FALSE) #converted pdf to txt
+df <- data.frame(doc_id = c(1), text = text, stringsAsFactors = FALSE)
+doc <- Corpus(DataframeSource(df))
+```
+
+Word Cloud for "The Lady with the Dog"
+======================================
+
+Below we are generating a general wordcloud for the story with a maximum word limit-
+
+```{r}
+wordcloud(word=doc, max.words = 300, scale = c(2, 0.5))
+```
+
+Cleaning up Word Cloud
+=======================
+
+To enhance the word cloud, we will clean up numbers and common words like "the," "and," and "with" (known as stop words) to focus on more meaningful terms. Additionally, we will remove punctuation and converting all words to lowercase can create a cleaner representation of the story's key themes.
+
+Removing numbers
+----------------
+
+Numbers are not very evident in the story but in case of any, removing them don't effect the essence of the story.
+
+```{r}
+doc <- tm_map(doc, content_transformer(tolower))
+doc <- tm_map(doc, removeNumbers)  
+doc <- tm_map(doc, removePunctuation)
+doc <- tm_map(doc, stripWhitespace)
+wordcloud(word=doc, max.words = 100, scale = c(3, 0.5))
+```
+
+Removing stop words
+-------------------
+
+In the previous analysis, the generated word cloud prominently features common and insignificant words like "and," "the," "that," etc. To refine the visualization and emphasize more meaningful terms, let's exclude these common words from the word cloud.
+
+```{r}
+doc <- tm_map(doc, removeWords, stopwords(kind = "en"))
+wordcloud(word=doc, max.words = 100, scale = c(3, 0.5))
+```
+
+Removing punctuation and single-letter words ('s)
+--------------------------------------------------
+
+To make the wordcloud neat and clear, the code removes dots, commas, and single-letter words like 's. It also takes out single and double quotation marks, making the text look cleaner and easier to understand.
+
+```{r}
+cleanText <- function(x) {
+  # Remove punctuation
+  x <- gsub("[[:punct:]]", "", x)
+  # Remove single letter words like 's
+  x <- gsub("\\b[a-zA-Z]\\b", "", x)
+  # Remove single quotation mark
+  x <- gsub("'", "", x)
+  # Remove double quotation marks
+  x <- gsub("\"", "", x)
+  return(x)
+}
+doc <- tm_map(doc, content_transformer(cleanText))
+wordcloud(words = doc, max.words = 100, scale = c(2.5, 0.5))
+```
+\newpage
+
+*"The Lady with the Dog" Wordcloud*
+===================================
+
+Now we will convert text data into a document-term matrix, extracts word frequencies, creates a data frame, and then generates a word cloud to visually represent the most 50 frequent words in the text.
+
+```{r}
+matrix <- as.matrix(TermDocumentMatrix(doc))
+words <- sort(rowSums(matrix), decreasing = TRUE)
+df2 <- data.frame(word = names(words), freq=words)
+wordcloud(words = df2$word, freq = df2$freq, max.words = 100, scale = c(2.5, 0.5))
+```
+\newpage
+
+Improving the Look of Word Cloud
+================================
+To make our word cloud look better, we're going to move the words that appear a lot to the middle of the word cloud. 
+
+```{r}
+wordcloud(words = df2$word, freq = df2$freq, max.words = 100, random.order = FALSE, 
+          scale = c(3, 0.5))
+```
+\newpage
+
+Final Wordcloud
+----------------
+
+Next, we'll add some colour using the Colour Brewer Palette and specify the proportion of words (rot.per=0.0), so that they are displayed horizontally to get our final wordcloud-
+
+```{r}
+wordcloud(words = df2$word, freq = df2$freq, max.words = 100, 
+          random.order = FALSE, scale = c(3, 0.5), colors = brewer.pal(4, "Dark2"), 
+          rot.per = 0.0)
+```
+
+\newpage
+
+Histogram
+==========
+
+The top 15 most frequently occurring words in this story through a histogram, showcasing their respective frequencies-
+
+```{r}
+# Select the top 15 most common words
+top_words <- head(df2[order(-df2$freq), ], 15)
+
+# Create a histogram
+barplot(top_words$freq, names.arg = top_words$word, 
+        main = "Top 15 Most Common Words",
+        xlab = "Words", ylab = "Frequency",
+        col = "skyblue", border = "black", ylim = c(0, max(top_words$freq) + 5), las = 3)
+```
+
+Assumptions of Story based on Wordcloud
+========================================
+
+The story seems to be about two people mainly; Gurov and Anna. In a town, possibly Moscow, there is a woman named Anna who seems to be experiencing a range of emotions and events. There is also a person named Gurov, and there might be a love interest or a relationship involved. The story suggests a sense of longing, perhaps due to separation or loss, and there are references to a white room and a sold dog. There could be themes of memory, reflection, and a yearning for connection. The mention of a steamer might imply travel or a journey, and the various locations (town, Moscow) could signify a sense of place or displacement. The story seems to touch on themes of life, love, and the passage of time.
+
+
+Actual Plot
+===========
+
+"The Lady with the Dog" tells the story of Dmitri Gurov, a married man who falls in love with Anna Sergeyevna while on vacation. Despite thinking it's just a fling, Gurov can't forget her when he returns home. As winter arrives, he struggles with his ordinary life in Moscow, full of routine and social obligations, while yearning for the secret love he shares with Anna. Gurov's hidden feelings make him question the roles he plays in society. The story explores the conflict between societal norms and the deep, hidden emotions people experience. Through Gurov and Anna, Chekhov captures the longing, pain, and inevitability of their connection, portraying the characters as individuals grappling with the complexities of love and the constraints of a society that often dictates the terms of such relationships.
+
+Comparison of Initial impression and actual plot
+================================================
+
+My initial impression captured some elements of the actual plot quite well. I correctly identified the main characters, Gurov and Anna, and recognized a sense of longing and emotions in the story. The mention of a love interest or relationship, as well as the potential themes of memory, reflection, and a yearning for connection, align with the actual plot. I also noticed the possibility of a journey or travel, which is reflected in the story's setting and Gurov's vacation.
+
+However, there are some details in my initial impression that don't align perfectly with the actual plot. For example, there is no explicit mention of a sold dog or a white room in Chekhov's "The Lady with the Dog." These are details that have been interpreted differently. Additionally, the story doesn't specify a town, and the specific location of Moscow is not explicitly mentioned in the plot.
+
+Overall, my initial impression captured the essence and some key elements of the story, showcasing a good understanding of the themes and emotions conveyed in "The Lady with the Dog."

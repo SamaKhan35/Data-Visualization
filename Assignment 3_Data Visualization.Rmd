@@ -1,0 +1,148 @@
+---
+title: "Assignment 3_Data Visualization"
+author: "Samaun Sarwar Khan"
+output: pdf_document
+date: "2023-11-21"
+---
+
+**Dataset Descrption**
+======================
+The dataset includes details on 891 Titanic passengers. In the dataset, each row represents an individual passenger, and the columns document different attributes like the passenger's ID, survival status (0 for not survived, 1 for survived), ticket class (1st, 2nd, or 3rd), name, gender, age, number of parents or children aboard (Parch), number of siblings or spouses aboard (SibSp), ticket number, fare, cabin number, and the port of embarkation (C = Cherbourg, Q = Queenstown, S = Southampton). This dataset includes a wide range of data, from personal information like age and family size to socioeconomic factors like ticket class and fare. A focus point for looking at potential factors that may have affected passengers' chances of survival is provided by the inclusion of survival status.  
+
+**Multivariate Analysis**
+========================
+The dataset offers an opportunity to explore and visualize intricate patterns, potentially uncovering insights into the demographic composition and survival dynamics of the Titanic passengers.
+
+```{r}
+#Loading the dataset
+titanic <- read.csv("Titanic.csv")
+```
+
+Scatter Lattice
+===============
+
+```{r, warning=FALSE}
+library(ggplot2)
+# Scatterplot Lattices with color representing Pclass 
+scatter_lattice <- ggplot(titanic, aes(x = Age, y = Fare, color = factor(Survived))) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c("0" = "red", "1" = "darkgreen"),
+                     labels = c("0" = "Not survived", "1" = "Survived")) +  #legend labels
+  labs(title = "Figure 1: Scatterplot Lattices for Multivariate Analysis",
+       x = "Age",
+       y = "Fare",
+       color = "Status") +
+  theme_minimal() +
+  facet_grid(. ~ Pclass) +  # Facet by Survived
+  theme(panel.border = element_rect(color = "black", fill = NA),  # Outline color
+        panel.spacing = unit(0.3, "lines"))  # Adjust spacing between facets
+
+# Display the scatterplot lattices
+print(scatter_lattice)
+```
+
+Figure 1 uses a colour scheme in which green indicates survivors and red indicates non-survivors, provides insights into the correlations between age, fare, and survival status. For every passenger class, the lattice is arranged into a different grid (Pclass). Significantly, Pclass 1 shows a concentration of green dots, especially for high paying passengers, suggesting a greater first-class survival rate. Pclass 2 shows a mixture of green and red dots, indicating a more evenly distributed population of non-survivors and survivors at different fare levels. On the other hand, Pclass 3 displays a higher percentage of non-survivors, particularly more among passengers with lower fare values, as indicated by the majority of red dots. By highlighting the significant differences in results across several Titanic passenger categories, this visualisation effectively illustrates the diverse survival dynamics depending on age, fare, and passenger class.
+
+A significant correlation between age and fare is seen when exploring the scatter plot in more detail. It's interesting to note that mid-age passengers seem to pay higher fares.  In particular, people who were roughly between the ages of 30  and 65 exhibited a tendency to spend more on their tickets. On the other hand, a unique pattern is noted for passengers who are 65 years of age and older, where fare typically decrease.  This indicates that older passengers—especially those over 65—tended to choose less expensive fare alternatives on average. The age-fare relationship offers important information on how different age groups spend their money. 
+
+Trellis Plot (Density)
+=======================
+
+```{r, warning=FALSE}
+# Set the theme for ggplot2
+theme_set(theme_minimal())
+
+# Trellis density plot using ggplot2 with outlined grids
+trellis_density_plot <- ggplot(titanic, aes(x = Age, fill = factor(Survived))) +
+  geom_density(alpha = 0.5) + 
+  facet_grid(Sex ~ Pclass) +  # Specifying the variables for trellising
+  labs(title = "Figure 2:Trellis Density Plot for Titanic Dataset",
+       x = "Age",
+       y = "Density",
+       fill = "Status") +
+  theme(legend.position = "top") +
+  theme_bw() +  # Set a white background
+  theme(panel.grid.major = element_blank(),  # Remove major gridlines
+        panel.grid.minor = element_blank(),  # Remove minor gridlines
+        panel.border = element_rect(color = "black", fill = NA, size = 1.3)) + 
+  scale_fill_manual(values = c("0" = "red", "1" = "green"),
+                    labels = c("0" = "Not survived", "1" = "Survived"))  #legend label
+
+# Print the trellis density plot
+print(trellis_density_plot)
+
+```
+
+In Figure 2, we can see a detailed picture of who survived on the Titanic, considering both gender and passenger class. It's clear that women tended to survive more than men in all passenger classes. For the first class (Pclass 1), passengers' ages varied widely from 0 to 80. Women in this class had a much higher survival compared to those who didn't survive. It's interesting that the ages of survivors in Pclass 1 were spread out quite evenly.
+
+Moving to the second class (Pclass 2), men had a lower chance of survival, while women's survival rates were a bit higher than those who didn't survive. There's a noticeable group of young men (ages 0-20) who survived. The women who survived in Pclass 2 were mostly between the ages of 0 and 40.
+
+In the third class (Pclass 3), the survival rate for women was much higher compared to women who didn't survive. For men in Pclass 3, both those who survived and those who didn't were mostly between the ages of 20 and 40. However, the density of men who survived was a bit lower than the density of those who didn't survive. This Figure 3 helps us understand how different factors like gender, age, and passenger class influenced the chances of survival on the Titanic.
+
+Mosaic Plot
+============
+
+```{r}
+library(vcd)
+library(grid)
+
+# Create a mosaic plot for the relationship between gender and survival status
+mosaic(titanic$Survived ~ titanic$Sex,
+       main = "Figure 3: Mosaic Plot for Gender and Survival",
+       xlab = "Gender", ylab = "Survival Status", shade = TRUE)
+
+
+```
+
+Figure 3 shows the intricate relationship between gender (Sex) and survival status (Survived) in the dataset with striking clarity. The gender distribution is shown by the mosaic plot's block widths, where the male block appears broader than the female block, indicating a higher proportion of male passengers than female passengers. Analyzing the colour shading within each block provides information about the survival status distribution. Interestingly, around 80% of female block is shaded suggesting they have a significantly higher surviving rate. On the other hand, the male block shows a reduced shaded area, indicating a survival probability of approximately 15% for male passengers.  
+
+
+Parallel Coordinates
+====================
+
+```{r}
+library(MASS)
+# Select numerical variables for the Parallel Coordinates plot
+numerical_variables <- titanic[, c("Pclass","SibSp", "Parch")]
+
+# Standardize numerical variables for better visualization
+standardized_data <- scale(numerical_variables)
+
+# Add the Survived variable to the standardized data
+standardized_data <- cbind(standardized_data, titanic$Survived)
+
+# Create a Parallel Coordinates plot
+parcoord(standardized_data, col = ifelse(titanic$Survived == 0, "darkred", "darkgreen"),
+         col.axis = "black", var.label = TRUE, 
+         main = "Figure 4: Parallel Coordinates for Titanic Dataset")
+
+legend("right", legend = c("Not Survived", "Survived"), 
+       fill = c("darkred", "darkgreen"), title = "Status", 
+       cex = .6, x.intersp = 0.2, y.intersp = .8)
+```
+
+Figure 4 visualizes the standardized numerical variables (Pclass, SibSp, Parch) in the Titanic dataset, with lines color-coded based on the 'Survived' variable (red for not survived, green for survived). Pclass 1 has visible green lines suggesting surviving  passengers and 2 has both surviving and non surviving passengers and Pclass 3 has non surviving passengers who had Parch/SibSp onboard. The plot indicates that most passengers with fewer than 3 SibSp and Parch have green lines, while those with more than 3 exhibit red lines, suggesting a potential association with non-survival. Notably, Pclass 1 and Pclass 3 have distinct characteristics, as indicated by their respective green and red coloring. Additionally, the convergence of most lines toward 0 at the end of the plot suggests a common trend in the dataset. The color-coded representation facilitates the identification of patterns related to survival, providing insights into the relationships and distributions of the numerical variables.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
